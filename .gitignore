@@ -1,0 +1,9 @@
+node_modules/
+build/
+.env
+*.tsbuildinfo
+
+# Claude Code / GSD workflow (local-only)
+CLAUDE.md
+.claude/
+.planning/

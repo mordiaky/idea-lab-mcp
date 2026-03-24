@@ -1,0 +1,72 @@
+{
+  "prompts": [
+    {
+      "id": "brainstorm_problem_first",
+      "name": "Brainstorm: Problem First",
+      "description": "Start from a specific problem and generate software-only solution candidates via the full ideation pipeline.",
+      "messageTemplate": "You are an ideation engine. Given this problem: \"{{problem}}\"{{#domain}} in the domain of {{domain}}{{/domain}}, call idea_lab_generate_ideas to generate a batch of software-only solution candidates. Use the problem description as the problemArea argument. Run the full pipeline for each candidate (save → score → critique → dedup → promote top ideas). Return the full pipeline results including all scores, critiques, and the final survivors.",
+      "args": [
+        {
+          "name": "problem",
+          "type": "string",
+          "required": true,
+          "description": "The problem to solve — be specific about who has it, what it is, and why it is painful"
+        },
+        {
+          "name": "domain",
+          "type": "string",
+          "required": false,
+          "description": "Optional domain to constrain the solution space (e.g., 'developer tooling', 'fintech', 'healthcare SaaS')"
+        }
+      ]
+    },
+    {
+      "id": "criticize_idea_harshly",
+      "name": "Criticize Idea Harshly",
+      "description": "Apply the harshest possible critique to a specific idea — identify wrappers, existing products, fragile dependencies, and software-only violations.",
+      "messageTemplate": "You are an adversarial critic. For idea {{ideaId}}: first call idea_lab_score_idea to get the current scores, then call idea_lab_critique_idea with the most brutal honest critique possible. Look for: (1) Is this just a GPT wrapper? (2) Does this already exist as a product? Search the web for direct competitors. (3) Are there fragile dependencies that make this risky? (4) Does this require any hardware, manufacturing, or lab work? (5) Is the problem statement vague or is the solution unclear? Be specific and cite evidence. Return the full critique findings.",
+      "args": [
+        {
+          "name": "ideaId",
+          "type": "string",
+          "required": true,
+          "description": "The UUID of the idea to critique"
+        }
+      ]
+    },
+    {
+      "id": "convert_idea_to_mvp_spec",
+      "name": "Convert Idea to MVP Spec",
+      "description": "Take a shortlisted idea and convert it into a detailed, actionable MVP specification with concrete build steps.",
+      "messageTemplate": "For idea {{ideaId}}, generate a detailed MVP specification. The spec must include: (1) Problem statement with specific user archetype, (2) Core feature set for the MVP (exclude everything non-essential), (3) Technical architecture — key components, data models, external APIs needed, (4) Build sequence — ordered list of 5-8 concrete engineering tasks to ship the MVP, (5) Success metrics — how will you know if the MVP is working, (6) Biggest risks and how to mitigate them. Keep the MVP scope to something shippable by 1 developer in 4-6 weeks. Output as structured markdown.",
+      "args": [
+        {
+          "name": "ideaId",
+          "type": "string",
+          "required": true,
+          "description": "The UUID of the shortlisted idea to convert to an MVP spec"
+        }
+      ]
+    },
+    {
+      "id": "generate_code_only_ideas",
+      "name": "Generate Code-Only Ideas",
+      "description": "Generate software-only ideas with extra emphasis on rejecting any hardware, manufacturing, or physical product concepts.",
+      "messageTemplate": "Call idea_lab_generate_ideas with domain '{{domain}}' and candidateCount {{count}}. CRITICAL CONSTRAINT: Every idea MUST be implementable entirely in software — no hardware components, no physical products, no manufacturing, no lab equipment, no IoT sensors (unless commodity like webcam/microphone). Before accepting any idea, explicitly verify it passes the software-only constraint. Reject and regenerate any idea that requires physical fabrication or custom hardware. Run the full pipeline for each candidate.",
+      "args": [
+        {
+          "name": "domain",
+          "type": "string",
+          "required": true,
+          "description": "The domain to generate ideas for"
+        },
+        {
+          "name": "count",
+          "type": "string",
+          "required": false,
+          "description": "Number of candidates to generate (5-8, default 5)"
+        }
+      ]
+    }
+  ]
+}
