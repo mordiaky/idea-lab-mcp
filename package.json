@@ -1,8 +1,37 @@
 {
   "name": "idea-lab-mcp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "MCP server for structured ideation — generating, scoring, deduplicating, and storing software ideas",
   "type": "module",
+  "main": "build/server.js",
+  "bin": {
+    "idea-lab-mcp": "build/server.js"
+  },
+  "files": [
+    "build",
+    "config",
+    "src/db/migrations",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mordiaky/idea-lab-mcp.git"
+  },
+  "homepage": "https://mordiaky.github.io/idea-lab-mcp/",
+  "bugs": {
+    "url": "https://github.com/mordiaky/idea-lab-mcp/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "ideation",
+    "idea-generation",
+    "software-ideas",
+    "sqlite"
+  ],
+  "author": "mordiaky",
   "scripts": {
     "dev": "tsx src/server.ts",
     "build": "tsc",
