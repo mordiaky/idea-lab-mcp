@@ -9,6 +9,8 @@ import { getIdeaForPlanning, saveMvpPlan, MvpStep } from "../services/action-pla
 import { deletePattern } from "../services/rejection-patterns.js";
 import { getMutationContext, recordMutation } from "../services/mutation.js";
 import { getResurfaceCandidates, markRevalidated } from "../services/resurface.js";
+import { getRefinementContext, createRefinedVariant } from "../services/refinement.js";
+import { getDecompositionContext, saveDecomposition } from "../services/decomposition.js";
 import { db } from "../db/client.js";
 import { ideas, ideaRuns, tags, ideaTags } from "../db/schema.js";
 import { eq, sql } from "drizzle-orm";
@@ -777,6 +779,166 @@ export function registerTools(server: McpServer): void {
           isError: true,
         };
       }
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    "idea_lab_submit_idea",
+    "Submit unstructured text containing one or more idea seeds. Returns the raw text with parsing instructions. After calling this, YOU (the caller) must: 1) Read the text and identify discrete idea candidates. 2) For each candidate, extract structured fields (title, oneLiner, problem, solution, domain, tags). 3) Call idea_lab_save_idea for each extracted idea. 4) Run the standard pipeline (score, critique, dedup) on each. This tool does NOT parse the text itself — it provides the text and instructions for you to parse.",
+    {
+      text: z.string().min(10).describe("Unstructured text containing idea seeds — brain dump, notes, conversation excerpt, etc."),
+      source: z.string().optional().describe("Where this text came from (e.g., 'meeting notes', 'shower thought', 'article reaction')"),
+    },
+    async (args) => {
+      const result = {
+        rawText: args.text,
+        source: args.source ?? "manual",
+        instructions:
+          "Identify each discrete idea in the raw text above. For each idea, extract the required fields and call idea_lab_save_idea. Then run the full pipeline on each saved idea: score_idea (read rubric first), critique_idea, check_duplicate. Promote top ideas with promote_idea.",
+        requiredFieldsPerIdea: ["title", "oneLiner", "problem", "solution"],
+        optionalFieldsPerIdea: ["whyNow", "targetUser", "constraints", "risks", "domain", "tags"],
+        parsingGuidelines:
+          "Split by distinct problem-solution pairs. One idea = one problem + one solution. If text describes multiple problems or multiple solutions to the same problem, split into separate ideas. Ignore meta-commentary, tangents, and non-idea content.",
+      };
+
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    "idea_lab_refine_idea",
+    "Refine a weak idea by applying an escalating constraint to force sharper focus. TWO-STEP process: Step 1 — call with ideaId only to get idea content, critique findings, score, and list of constraints. Step 2 — pick a constraint, generate a refined version that addresses critique weaknesses while satisfying the constraint, then call again with ideaId + constraint + all new idea fields. Creates a variant linked to the parent. Run the full pipeline (score, critique, dedup) on the new variant.",
+    {
+      ideaId: z.string().uuid().describe("UUID of the idea to refine"),
+      constraint: z
+        .enum(["weekend-buildable", "cli-only", "offline-only", "single-user-type", "no-dependencies", "api-only"])
+        .optional()
+        .describe("Constraint to apply. Omit on Step 1."),
+      title: z.string().optional().describe("Title for the refined idea"),
+      oneLiner: z.string().optional().describe("One sentence: what the refined idea does and for whom"),
+      problem: z.string().optional().describe("The problem this refined idea solves"),
+      solution: z.string().optional().describe("How the refined idea solves it"),
+      whyNow: z.string().optional().describe("Why viable now"),
+      targetUser: z.string().optional().describe("Specific user archetype"),
+      constraints: z.string().optional().describe("Technical or business constraints"),
+      risks: z.string().optional().describe("Key risks"),
+      domain: z.string().optional().describe("Domain category"),
+      tags: z.array(z.string()).optional().describe("Semantic tags"),
+    },
+    async (args) => {
+      // Step 1: Return refinement context (no constraint provided)
+      if (args.constraint === undefined) {
+        const context = await getRefinementContext(args.ideaId);
+        if ("error" in context) {
+          return {
+            content: [{ type: "text", text: JSON.stringify(context, null, 2) }],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify(context, null, 2) }],
+        };
+      }
+
+      // Step 2: Create the refined variant
+      if (!args.title || !args.oneLiner || !args.problem || !args.solution) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(
+                {
+                  error: "Step 2 requires title, oneLiner, problem, and solution for the refined idea",
+                },
+                null,
+                2,
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      const result = await createRefinedVariant(args.ideaId, args.constraint, {
+        title: args.title,
+        oneLiner: args.oneLiner,
+        problem: args.problem,
+        solution: args.solution,
+        whyNow: args.whyNow,
+        targetUser: args.targetUser,
+        constraints: args.constraints,
+        risks: args.risks,
+        domain: args.domain,
+        tags: args.tags,
+      });
+
+      if ("error" in result) {
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: true,
+        };
+      }
+
+      return {
+        content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    "idea_lab_decompose_idea",
+    "Decompose a shortlisted or build-next idea into 3-7 independently shippable micro-ideas. TWO-STEP process: Step 1 — call with ideaId only to get idea content and decomposition guidance. Step 2 — break the idea into micro-ideas, then call again with ideaId + microIdeas array. Each micro-idea is saved as a variant linked to the parent. Run the full pipeline on each micro-idea afterward. Only works on shortlisted or build-next ideas.",
+    {
+      ideaId: z.string().uuid().describe("UUID of the idea to decompose"),
+      microIdeas: z
+        .array(
+          z.object({
+            title: z.string().describe("Micro-idea title"),
+            oneLiner: z.string().describe("One sentence summary"),
+            problem: z.string().describe("Specific problem this micro-idea solves"),
+            solution: z.string().describe("How it solves it"),
+            standaloneValue: z
+              .string()
+              .describe("Why this works as an independent product — what value does it deliver on its own?"),
+            domain: z.string().optional().describe("Domain category"),
+            tags: z.array(z.string()).optional().describe("Semantic tags"),
+          }),
+        )
+        .min(3)
+        .max(7)
+        .optional()
+        .describe("Omit on Step 1. Provide 3-7 micro-ideas on Step 2."),
+    },
+    async (args) => {
+      // Step 1: Return decomposition context (no microIdeas provided)
+      if (args.microIdeas === undefined) {
+        const context = await getDecompositionContext(args.ideaId);
+        if ("error" in context) {
+          return {
+            content: [{ type: "text", text: JSON.stringify(context, null, 2) }],
+            isError: true,
+          };
+        }
+        return {
+          content: [{ type: "text", text: JSON.stringify(context, null, 2) }],
+        };
+      }
+
+      // Step 2: Save all micro-ideas
+      const result = await saveDecomposition(args.ideaId, args.microIdeas);
+
+      if ("error" in result) {
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+          isError: true,
+        };
+      }
+
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       };
