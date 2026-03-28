@@ -22,7 +22,7 @@ Works with any MCP-compatible client: VS Code (Copilot), Cursor, Windsurf, Conti
 ### Install
 
 ```bash
-git clone https://github.com/user/idea-lab-mcp.git
+git clone https://github.com/mordiaky/idea-lab-mcp.git
 cd idea-lab-mcp
 npm install
 npm run build
