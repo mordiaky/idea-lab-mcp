@@ -361,7 +361,7 @@
       <h1>Idea <span>Lab</span></h1>
       <p>An MCP server that turns your AI assistant into a structured ideation partner. Generate, score, critique, and store software ideas — all locally.</p>
       <div class="hero-badges">
-        <span class="badge"><span class="dot dot-green"></span> 14 MCP tools</span>
+        <span class="badge"><span class="dot dot-green"></span> 17 MCP tools</span>
         <span class="badge"><span class="dot dot-blue"></span> Local SQLite storage</span>
         <span class="badge"><span class="dot dot-orange"></span> Zero config</span>
         <span class="badge"><span class="dot dot-purple"></span> Any MCP client</span>
@@ -411,8 +411,20 @@
 
       <div class="cards" style="margin-top:32px">
         <div class="card">
+          <h4>Import your notes</h4>
+          <p>"Here are my ideas from last month's brainstorm" — paste messy notes and they get auto-structured and scored.</p>
+        </div>
+        <div class="card">
+          <h4>Strengthen weak ideas</h4>
+          <p>"Refine this with a weekend-buildable constraint" — escalating constraints force clarity until the idea passes or cracks.</p>
+        </div>
+        <div class="card">
+          <h4>Break down big ideas</h4>
+          <p>"Decompose this into things I can ship" — splits into 3-7 independently shippable micro-products with a "start here" pick.</p>
+        </div>
+        <div class="card">
           <h4>Search &amp; revisit</h4>
-          <p>"Show me my highest-rated ideas"<br>"Find ideas related to automation"<br>"What have I not looked at in a while?"</p>
+          <p>"Show me my highest-rated ideas"<br>"What have I not looked at in a while?"</p>
         </div>
         <div class="card">
           <h4>Evolve winners</h4>
@@ -617,13 +629,14 @@
 
   <div class="container">
     <section>
-      <h2>All 14 tools</h2>
+      <h2>All 17 tools</h2>
       <p>Everything your assistant needs to run the full ideation pipeline.</p>
 
       <h3>Generation</h3>
       <div class="tools-grid">
         <div class="tool-item"><div><div class="tool-name">generate_ideas</div><div class="tool-desc">Create 5-8 candidates using 4 creative techniques</div></div></div>
         <div class="tool-item"><div><div class="tool-name">save_idea</div><div class="tool-desc">Store a new idea in the database</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">submit_idea</div><div class="tool-desc">Import unstructured notes and extract ideas</div></div></div>
         <div class="tool-item"><div><div class="tool-name">mutate_idea</div><div class="tool-desc">Create a variant on a different axis</div></div></div>
       </div>
 
@@ -647,6 +660,12 @@
         <div class="tool-item"><div><div class="tool-name">delete_idea</div><div class="tool-desc">Permanently remove a rejected idea</div></div></div>
         <div class="tool-item"><div><div class="tool-name">mark_revalidated</div><div class="tool-desc">Mark as re-reviewed after resurfacing</div></div></div>
         <div class="tool-item"><div><div class="tool-name">remove_pattern</div><div class="tool-desc">Delete a false-positive rejection pattern</div></div></div>
+      </div>
+
+      <h3>Refinement</h3>
+      <div class="tools-grid">
+        <div class="tool-item"><div><div class="tool-name">refine_idea</div><div class="tool-desc">Strengthen a weak idea through escalating constraints</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">decompose_idea</div><div class="tool-desc">Break a big idea into shippable micro-products</div></div></div>
       </div>
 
       <h3>Planning</h3>

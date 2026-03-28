@@ -217,6 +217,24 @@ The assistant will:
 
 The assistant calls `mutate_idea` to create a variant that changes the target user while keeping the core concept. The variant is linked to the original so you can compare lineage.
 
+### Import ideas from your notes
+
+> "Here are my ideas from last month's brainstorm session: [paste messy notes]"
+
+The assistant calls `submit_idea` with your raw text, extracts each discrete idea, structures them, and runs each through the full scoring pipeline.
+
+### Strengthen a weak idea
+
+> "Idea X scored weak — refine it with a 'weekend-buildable' constraint"
+
+The assistant calls `refine_idea` to apply the constraint, generating a tighter version that gets re-scored. You can keep applying different constraints (CLI-only, offline-only, etc.) until it passes or you move on.
+
+### Break a big idea into shippable pieces
+
+> "Decompose my top idea into things I can actually start building"
+
+The assistant calls `decompose_idea` to split it into 3-7 independently shippable micro-products, each scored on its own. It recommends which piece to start with this weekend.
+
 ### Revisit old ideas
 
 > "What shortlisted ideas have I not looked at in 2 weeks?"
@@ -270,6 +288,9 @@ raw  -->  shortlisted  -->  build-next
 | `idea_lab_mark_revalidated` | Mark idea as re-reviewed |
 | `idea_lab_remove_pattern` | Remove a false-positive rejection pattern |
 | `idea_lab_generate_action_plan` | Create MVP steps for an idea |
+| `idea_lab_submit_idea` | Import unstructured notes and extract ideas |
+| `idea_lab_refine_idea` | Strengthen a weak idea through constraints |
+| `idea_lab_decompose_idea` | Break a big idea into shippable micro-products |
 
 ## Configuration
 
