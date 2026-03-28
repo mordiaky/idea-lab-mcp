@@ -1,25 +1,41 @@
-# Idea Lab MCP Server
+# Idea Lab
 
-A structured ideation engine that runs as an [MCP](https://modelcontextprotocol.io/) server. It generates, critiques, scores, deduplicates, and stores software ideas — giving your AI assistant persistent memory across sessions to build a ranked idea database over time.
+An MCP server that turns your AI assistant into a structured ideation partner. It generates, scores, critiques, and stores software ideas locally — so your assistant remembers past ideas across sessions and never suggests the same thing twice.
 
-Works with any MCP-compatible client: VS Code (Copilot), Cursor, Windsurf, Continue, Cline, Zed, Claude Desktop, and more.
+## What it does
 
-## Features
+You talk to your AI assistant like normal. Idea Lab gives it tools to:
 
-- **14 MCP tools** covering the full ideation lifecycle — generation, scoring, critique, deduplication, mutation, and action planning
-- **Persistent local storage** — SQLite database, zero cloud dependencies, your ideas never leave your machine
-- **Zero config** — database auto-creates on first run, no API keys or secrets required
-- **Cross-platform** — works on macOS, Windows, and Linux
-- **Any MCP client** — standard stdio transport compatible with all MCP hosts
+**Generate ideas** using 4 different creative techniques, then run each one through a pipeline:
 
-## Quickstart
+```
+"Generate 5 software ideas in the developer tools space"
 
-### Prerequisites
+  idea_lab_generate_ideas  →  generates candidates
+  idea_lab_save_idea       →  stores each one
+  idea_lab_score_idea      →  scores on 7 dimensions
+  idea_lab_critique_idea   →  tries to tear it apart
+  idea_lab_check_duplicate →  checks against everything stored
+```
 
-- **Node.js >= 22** ([download](https://nodejs.org/))
-- A C++ compiler for the native SQLite module (see [Platform Setup](#platform-setup) if `npm install` fails)
+**Search and revisit** ideas you've generated before:
 
-### Install
+```
+"Show me my highest-rated ideas"
+"Find ideas related to automation"
+"What shortlisted ideas haven't I looked at in a while?"
+```
+
+**Evolve ideas** that survived the pipeline:
+
+```
+"Take that CLI tool idea and reimagine it as a SaaS product"
+"Create an MVP plan for my top-rated idea"
+```
+
+Everything is stored locally in SQLite. No cloud, no API keys, no data leaving your machine.
+
+## Install
 
 ```bash
 git clone https://github.com/mordiaky/idea-lab-mcp.git
@@ -29,25 +45,16 @@ npm run build
 npm run db:migrate
 ```
 
-That's it. The database is created automatically at `~/.idea-lab/ideas.db`.
+Requires **Node.js 22+**. If `npm install` fails, see [platform setup](docs/platform-setup.md).
 
-Optionally load sample data to explore the tools:
+## Connect to your editor
 
-```bash
-npm run db:seed
-```
+Add the server to your MCP client. Replace `/absolute/path/to` with the real path to where you cloned the project.
 
-### Connect to your editor
+<details>
+<summary><b>VS Code (GitHub Copilot)</b></summary>
 
-Pick your client and follow the setup below. Each one needs the **absolute path** to where you cloned the project.
-
----
-
-## Client Setup
-
-### VS Code (GitHub Copilot)
-
-Create `.vscode/mcp.json` in your workspace (or add to your user settings):
+Create `.vscode/mcp.json`:
 
 ```json
 {
@@ -60,10 +67,10 @@ Create `.vscode/mcp.json` in your workspace (or add to your user settings):
   }
 }
 ```
+</details>
 
-Requires GitHub Copilot with agent mode enabled.
-
-### Cursor
+<details>
+<summary><b>Cursor</b></summary>
 
 Create `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per-project):
 
@@ -77,8 +84,10 @@ Create `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per-project):
   }
 }
 ```
+</details>
 
-### Windsurf
+<details>
+<summary><b>Windsurf</b></summary>
 
 Edit `~/.codeium/windsurf/mcp_config.json`:
 
@@ -92,8 +101,10 @@ Edit `~/.codeium/windsurf/mcp_config.json`:
   }
 }
 ```
+</details>
 
-### Continue (VS Code / JetBrains)
+<details>
+<summary><b>Continue (VS Code / JetBrains)</b></summary>
 
 Add to `~/.continue/config.yaml`:
 
@@ -104,14 +115,12 @@ mcpServers:
     args:
       - /absolute/path/to/idea-lab-mcp/build/index.js
 ```
+</details>
 
-Or drop a JSON file into `~/.continue/mcpServers/` using the Cursor/Windsurf format above.
+<details>
+<summary><b>Cline</b></summary>
 
-### Cline (VS Code)
-
-Easiest: use the MCP Servers panel in Cline's UI to add a new server.
-
-Or edit the settings file directly:
+Use the MCP Servers panel in Cline's UI, or edit the config directly:
 
 | OS | Path |
 |----|------|
@@ -129,13 +138,13 @@ Or edit the settings file directly:
   }
 }
 ```
+</details>
 
-### Claude Desktop
+<details>
+<summary><b>Claude Desktop</b></summary>
 
-Edit the config file:
-
-| OS | Path |
-|----|------|
+| OS | Config path |
+|----|-------------|
 | macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
 | Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
 | Linux | `~/.config/Claude/claude_desktop_config.json` |
@@ -152,14 +161,18 @@ Edit the config file:
 ```
 
 Fully quit and restart the app after editing.
+</details>
 
-### Claude Code (CLI)
+<details>
+<summary><b>Claude Code (CLI)</b></summary>
 
 ```bash
 claude mcp add idea-lab -- node /absolute/path/to/idea-lab-mcp/build/index.js
 ```
+</details>
 
-### Zed
+<details>
+<summary><b>Zed</b></summary>
 
 Add to `~/.config/zed/settings.json`:
 
@@ -174,167 +187,111 @@ Add to `~/.config/zed/settings.json`:
   }
 }
 ```
+</details>
 
-Note: `"source": "custom"` is required for Zed.
+## Example workflows
 
----
+### Brainstorm session
 
-## Platform Setup
+> "Generate software ideas for the healthcare space, then score and critique the best ones"
 
-The SQLite driver (`better-sqlite3`) is a native module. It ships prebuilt binaries for most setups, but if `npm install` fails with a build error, install the build tools for your OS:
+The assistant will:
+1. Call `generate_ideas` to create 5-8 candidates using different creative techniques
+2. Save each one and score it across 7 dimensions (novelty, usefulness, feasibility, testability, speed to MVP, defensibility, clarity)
+3. Critique the high scorers — searching for existing products, fragile dependencies, and vague claims
+4. Check for duplicates against your stored ideas
+5. Return a summary of what passed and what got rejected
 
-### macOS
+### Build on a winner
 
-```bash
-xcode-select --install
+> "Show me my shortlisted ideas and create an MVP plan for the best one"
+
+The assistant will:
+1. Search your stored ideas filtered to `shortlisted` status
+2. Pick the highest-scoring one (or let you choose)
+3. Generate 3-5 concrete MVP steps with tech stack recommendations
+
+### Explore a different angle
+
+> "Take idea X and mutate it — what if we targeted enterprise users instead?"
+
+The assistant calls `mutate_idea` to create a variant that changes the target user while keeping the core concept. The variant is linked to the original so you can compare lineage.
+
+### Revisit old ideas
+
+> "What shortlisted ideas have I not looked at in 2 weeks?"
+
+The assistant calls `resurface_ideas` to find stale shortlisted ideas that might deserve a second look now that your thinking has evolved.
+
+## How scoring works
+
+Each idea is scored 0-10 on 7 dimensions with different weights:
+
+| Dimension | Weight | What it measures |
+|-----------|--------|------------------|
+| Novelty | 25% | Is this genuinely new? |
+| Usefulness | 25% | Does it solve a real problem? |
+| Feasibility | 20% | Can it actually be built? |
+| Testability | 15% | Can you validate it works? |
+| Speed to MVP | 10% | How fast to a working prototype? |
+| Defensibility | 5% | Is it hard to copy? |
+| Clarity | gate | Is the idea well-defined? (min 5, not in composite) |
+
+Ideas need to clear minimum thresholds (feasibility >= 7, usefulness >= 7, novelty >= 6, composite >= 6.5) to advance.
+
+## How ideas move through the pipeline
+
+```
+raw  -->  shortlisted  -->  build-next
+ |             |                |
+ +---- rejected (terminal) ----+
 ```
 
-### Windows
+- **raw** — just generated, not yet evaluated
+- **shortlisted** — passed scoring, critique, and dedup checks
+- **build-next** — picked for MVP planning
+- **rejected** — didn't survive evaluation (can happen at any stage)
 
-During Node.js installation, check **"Automatically install the necessary tools"**. If you already have Node installed:
+## Tools reference
 
-```
-npm install --global windows-build-tools
-```
-
-Or install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with the "Desktop development with C++" workload.
-
-### Linux (Debian/Ubuntu)
-
-```bash
-sudo apt-get install build-essential python3
-```
-
-### Linux (Fedora/RHEL)
-
-```bash
-sudo dnf groupinstall "Development Tools"
-sudo dnf install python3
-```
-
----
+| Tool | What it does |
+|------|-------------|
+| `idea_lab_generate_ideas` | Generate 5-8 candidates using creative techniques |
+| `idea_lab_save_idea` | Store a new idea |
+| `idea_lab_score_idea` | Score on 7 dimensions |
+| `idea_lab_critique_idea` | Adversarial critique |
+| `idea_lab_check_duplicate` | Check for duplicates |
+| `idea_lab_search_ideas` | Search by status, domain, score, tags, date |
+| `idea_lab_get_recent_ideas` | Get last N ideas |
+| `idea_lab_promote_idea` | Advance through lifecycle |
+| `idea_lab_delete_idea` | Delete a rejected idea |
+| `idea_lab_mutate_idea` | Create a variant on a different axis |
+| `idea_lab_resurface_ideas` | Find stale shortlisted ideas |
+| `idea_lab_mark_revalidated` | Mark idea as re-reviewed |
+| `idea_lab_remove_pattern` | Remove a false-positive rejection pattern |
+| `idea_lab_generate_action_plan` | Create MVP steps for an idea |
 
 ## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DB_PATH` | `~/.idea-lab/ideas.db` | Path to SQLite database file |
+| `DB_PATH` | `~/.idea-lab/ideas.db` | SQLite database location |
 
-That's the only setting. The default works without any configuration. Copy `.env.example` if you need to customize it.
-
----
-
-## MCP Tools
-
-### Generation
-
-| Tool | Description |
-|------|-------------|
-| `idea_lab_generate_ideas` | Batch generate 5-8 candidates using 4 techniques (cross-domain transfer, forced analogy, contradiction search, morphological matrix) |
-| `idea_lab_save_idea` | Save a new idea to the database |
-| `idea_lab_mutate_idea` | Create a variant by changing one axis (target user, scope, tech, or business model) |
-
-### Evaluation
-
-| Tool | Description |
-|------|-------------|
-| `idea_lab_score_idea` | Score on 7 dimensions (novelty, usefulness, feasibility, testability, speed to MVP, defensibility, clarity) |
-| `idea_lab_critique_idea` | Adversarial critique — finds every reason the idea should be rejected |
-| `idea_lab_check_duplicate` | Two-step duplicate detection against stored ideas |
-
-### Retrieval
-
-| Tool | Description |
-|------|-------------|
-| `idea_lab_search_ideas` | Search by status, domain, score range, tags, or date |
-| `idea_lab_get_recent_ideas` | Get the last N ideas (non-rejected) |
-| `idea_lab_resurface_ideas` | Find shortlisted ideas that haven't been reviewed in N days |
-
-### Lifecycle
-
-| Tool | Description |
-|------|-------------|
-| `idea_lab_promote_idea` | Move through lifecycle states (raw &rarr; shortlisted &rarr; build-next) |
-| `idea_lab_delete_idea` | Permanently delete a rejected idea |
-| `idea_lab_mark_revalidated` | Mark an idea as re-validated after resurfacing |
-| `idea_lab_remove_pattern` | Delete a false-positive rejection pattern |
-
-### Planning
-
-| Tool | Description |
-|------|-------------|
-| `idea_lab_generate_action_plan` | Generate 3-5 MVP steps with tech stack for a shortlisted idea |
-
-## MCP Resources
-
-| URI | Description |
-|-----|-------------|
-| `idea-lab://rubric` | Scoring rubric — dimensions, weights, thresholds, anchors |
-| `idea-lab://software-only-constraints` | Software-only enforcement criteria |
-| `idea-lab://recent-ideas` | Last 20 non-rejected ideas |
-| `idea-lab://top-rated-ideas` | Top 10 shortlisted and build-next ideas |
-| `idea-lab://rejection-patterns` | Learned anti-patterns with frequency data |
-| `idea-lab://portfolio-overview` | Domain distribution, average scores, and gaps |
-| `idea-lab://idea-lineage/{ideaId}` | Parent-child mutation tree for a specific idea |
-
-## MCP Prompts
-
-| Prompt | Description |
-|--------|-------------|
-| `brainstorm_problem_first` | Ideate around a specific problem and optional domain |
-| `criticize_idea_harshly` | Adversarial critique for a given idea |
-| `convert_idea_to_mvp_spec` | Convert a shortlisted idea to an MVP spec |
-| `generate_code_only_ideas` | Generate code-only ideas for a domain |
-
----
-
-## Idea Lifecycle
-
-```
-raw  -->  shortlisted  -->  build-next
- |            |                 |
- +--- rejected (terminal) -----+
-```
-
-Ideas start as `raw`, get promoted through evaluation, and can be `rejected` from any state.
-
----
+That's the only setting. The default works without any configuration.
 
 ## Development
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Run server with tsx (no build step) |
-| `npm run build` | Compile TypeScript to `build/` |
-| `npm test` | Run test suite |
-| `npm run lint` | Lint source code |
-| `npm run format` | Format source code |
-| `npm run db:generate` | Generate migrations from schema changes |
-| `npm run db:migrate` | Apply pending database migrations |
-| `npm run db:seed` | Load sample data |
-
-## Architecture
-
+```bash
+npm run dev           # Run server (no build step)
+npm run build         # Compile TypeScript
+npm test              # Run tests
+npm run db:generate   # Generate migrations from schema changes
+npm run db:migrate    # Apply migrations
+npm run db:seed       # Load sample data
 ```
-src/
-  server.ts       Entry point — MCP server setup and stdio transport
-  config.ts       Database path configuration
-  config/         JSON config loaders (rubric, constraints, techniques, prompts)
-  db/             Schema, client, migrations, seed script
-  tools/          14 MCP tool handlers
-  services/       Business logic (generation, scoring, critique, dedup, retrieval, etc.)
-  resources/      7 MCP resource handlers
-  prompts/        4 MCP prompt handlers
-
-config/
-  rubric.json         Scoring dimensions, weights, and anchor definitions
-  constraints.json    Software-only enforcement rules
-  techniques.json     Ideation technique prompt templates
-  prompts.json        MCP prompt templates
-```
-
-Database: SQLite at `~/.idea-lab/ideas.db` with 8 tables (ideas, scores, critiques, tags, idea_tags, idea_runs, idea_variants, rejection_patterns).
 
 ## License
 
-[PolyForm Noncommercial 1.0.0](LICENSE) — free for personal and non-commercial use. For commercial licensing, contact the author.
+[PolyForm Noncommercial 1.0.0](LICENSE) — free for personal and non-commercial use.
+
+For commercial licensing, contact the author.
