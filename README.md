@@ -337,4 +337,4 @@ Database: SQLite at `~/.idea-lab/ideas.db` with 8 tables (ideas, scores, critiqu
 
 ## License
 
-ISC
+[PolyForm Noncommercial 1.0.0](LICENSE) — free for personal and non-commercial use. For commercial licensing, contact the author.
