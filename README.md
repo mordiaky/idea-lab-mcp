@@ -1,5 +1,9 @@
 # Idea Lab
 
+[![npm version](https://img.shields.io/npm/v/idea-lab-mcp)](https://www.npmjs.com/package/idea-lab-mcp)
+[![GitHub release](https://img.shields.io/github/v/release/mordiaky/idea-lab-mcp)](https://github.com/mordiaky/idea-lab-mcp/releases)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/license-PolyForm--Noncommercial-blue)](LICENSE)
+
 An MCP server that turns your AI assistant into a structured ideation partner. It generates, scores, critiques, and stores software ideas locally — so your assistant remembers past ideas across sessions and never suggests the same thing twice.
 
 ## What it does
@@ -36,6 +40,16 @@ You talk to your AI assistant like normal. Idea Lab gives it tools to:
 Everything is stored locally in SQLite. No cloud, no API keys, no data leaving your machine.
 
 ## Install
+
+### From npm
+
+```bash
+npm install idea-lab-mcp
+cd node_modules/idea-lab-mcp
+node build/db/migrate.js
+```
+
+### From source
 
 ```bash
 git clone https://github.com/mordiaky/idea-lab-mcp.git

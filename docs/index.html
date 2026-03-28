@@ -368,6 +368,7 @@
       </div>
       <div class="buttons">
         <a href="https://github.com/mordiaky/idea-lab-mcp" class="btn btn-primary">View on GitHub</a>
+        <a href="https://www.npmjs.com/package/idea-lab-mcp" class="btn btn-secondary">npm package</a>
         <a href="#install" class="btn btn-secondary">Get Started</a>
       </div>
     </div>
@@ -441,8 +442,20 @@
   <div class="container">
     <section id="install">
       <h2>Install</h2>
-      <p>Clone, build, and connect in under 2 minutes.</p>
+      <p>Two options — npm package or from source.</p>
 
+      <h3>From npm</h3>
+      <div class="install-block">
+        <div class="install-header">
+          <div class="circles"><span></span><span></span><span></span></div>
+          Terminal
+        </div>
+        <pre><span class="cmd">npm install</span> idea-lab-mcp
+<span class="cmd">cd</span> node_modules/idea-lab-mcp
+<span class="cmd">node</span> build/db/migrate.js    <span class="comment"># creates ~/.idea-lab/ideas.db</span></pre>
+      </div>
+
+      <h3>From source</h3>
       <div class="install-block">
         <div class="install-header">
           <div class="circles"><span></span><span></span><span></span></div>
@@ -682,6 +695,8 @@
       </p>
       <p style="margin-top:8px">
         <a href="https://github.com/mordiaky/idea-lab-mcp">GitHub</a> &middot;
+        <a href="https://www.npmjs.com/package/idea-lab-mcp">npm</a> &middot;
+        <a href="https://github.com/mordiaky/idea-lab-mcp/releases">Releases</a> &middot;
         <a href="https://github.com/mordiaky/idea-lab-mcp/issues">Issues</a> &middot;
         <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/SECURITY.md">Security</a>
       </p>
