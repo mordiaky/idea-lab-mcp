@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Idea Lab — MCP Server for Structured Ideation</title>
+  <meta name="description" content="An MCP server that turns your AI assistant into a structured ideation partner. Generate, score, critique, and store software ideas locally.">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-card: #161b22;
+      --bg-code: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-dim: #1f6feb;
+      --green: #3fb950;
+      --orange: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 640px;
+      margin: 0 auto 32px;
+    }
+    .hero-badges {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .badge .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot-green { background: var(--green); }
+    .dot-blue { background: var(--accent); }
+    .dot-orange { background: var(--orange); }
+    .dot-purple { background: var(--purple); }
+
+    /* Buttons */
+    .buttons { display: flex; gap: 12px; justify-content: center; margin-top: 32px; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .btn:hover { text-decoration: none; }
+    .btn-primary {
+      background: var(--accent-dim);
+      color: #fff;
+      border: 1px solid var(--accent);
+    }
+    .btn-primary:hover { background: var(--accent); color: #fff; }
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--text-muted); }
+
+    /* Sections */
+    section { padding: 64px 0; border-bottom: 1px solid var(--border); }
+    section:last-child { border-bottom: none; }
+    section h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+    section h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 32px 0 12px;
+      color: var(--text);
+    }
+    section > p { color: var(--text-muted); margin-bottom: 32px; }
+
+    /* Pipeline */
+    .pipeline {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin: 24px 0;
+    }
+    .pipeline-prompt {
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 20px;
+      font-size: 1.05rem;
+    }
+    .pipeline-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .pipeline-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--bg-code);
+      border-radius: 8px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+    }
+    .pipeline-step .arrow { color: var(--text-muted); }
+    .pipeline-step .tool { color: var(--accent); }
+    .pipeline-step .desc { color: var(--text-muted); }
+
+    /* Cards grid */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+    }
+    .card h4 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+    }
+    .card p { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* Install block */
+    .install-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .install-header {
+      padding: 12px 20px;
+      background: var(--bg-code);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .install-header .circles {
+      display: flex;
+      gap: 6px;
+    }
+    .install-header .circles span {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--border);
+    }
+
+    pre {
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85em;
+    }
+    .cmd { color: var(--green); }
+    .comment { color: var(--text-muted); }
+    .flag { color: var(--orange); }
+    p code, li code {
+      background: var(--bg-code);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    /* Scoring table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    th {
+      text-align: left;
+      padding: 10px 16px;
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    td {
+      padding: 10px 16px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    /* Lifecycle */
+    .lifecycle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 32px 0;
+      flex-wrap: wrap;
+    }
+    .lifecycle-stage {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    .stage-raw { background: #1c2128; border: 1px solid var(--border); color: var(--text-muted); }
+    .stage-shortlisted { background: #0c2d6b; border: 1px solid var(--accent-dim); color: var(--accent); }
+    .stage-build { background: #0f2f1c; border: 1px solid #238636; color: var(--green); }
+    .stage-rejected { background: #2d1216; border: 1px solid #da3633; color: var(--red); }
+    .lifecycle-arrow { color: var(--text-muted); font-size: 1.5rem; }
+
+    /* Tools list */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .tool-item {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .tool-name {
+      color: var(--accent);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+    .tool-desc { color: var(--text-muted); }
+
+    /* Clients */
+    .client-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .client-item {
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* Config tabs */
+    .config-tabs { margin-top: 24px; }
+    .tab-buttons {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .tab-content { display: none; padding-top: 16px; }
+    .tab-content.active { display: block; }
+    .tab-content .install-block { margin-bottom: 12px; }
+    .tab-note { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
+
+    /* Footer */
+    footer {
+      padding: 48px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    footer a { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 2rem; }
+      .hero p { font-size: 1.05rem; }
+      .lifecycle { flex-direction: column; gap: 8px; }
+      .lifecycle-arrow { transform: rotate(90deg); }
+      .pipeline { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="hero">
+      <h1>Idea <span>Lab</span></h1>
+      <p>An MCP server that turns your AI assistant into a structured ideation partner. Generate, score, critique, and store software ideas — all locally.</p>
+      <div class="hero-badges">
+        <span class="badge"><span class="dot dot-green"></span> 14 MCP tools</span>
+        <span class="badge"><span class="dot dot-blue"></span> Local SQLite storage</span>
+        <span class="badge"><span class="dot dot-orange"></span> Zero config</span>
+        <span class="badge"><span class="dot dot-purple"></span> Any MCP client</span>
+      </div>
+      <div class="buttons">
+        <a href="https://github.com/mordiaky/idea-lab-mcp" class="btn btn-primary">View on GitHub</a>
+        <a href="#install" class="btn btn-secondary">Get Started</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>How it works</h2>
+      <p>You talk to your AI assistant like normal. Idea Lab gives it tools to run a structured pipeline.</p>
+
+      <div class="pipeline">
+        <div class="pipeline-prompt">"Generate 5 software ideas in the developer tools space"</div>
+        <div class="pipeline-steps">
+          <div class="pipeline-step">
+            <span class="tool">generate_ideas</span>
+            <span class="arrow">&rarr;</span>
+            <span class="desc">creates 5-8 candidates using creative techniques</span>
+          </div>
+          <div class="pipeline-step">
+            <span class="tool">save_idea</span>
+            <span class="arrow">&rarr;</span>
+            <span class="desc">stores each one in your local database</span>
+          </div>
+          <div class="pipeline-step">
+            <span class="tool">score_idea</span>
+            <span class="arrow">&rarr;</span>
+            <span class="desc">scores on 7 dimensions (novelty, feasibility, ...)</span>
+          </div>
+          <div class="pipeline-step">
+            <span class="tool">critique_idea</span>
+            <span class="arrow">&rarr;</span>
+            <span class="desc">adversarial critique — tries to tear it apart</span>
+          </div>
+          <div class="pipeline-step">
+            <span class="tool">check_duplicate</span>
+            <span class="arrow">&rarr;</span>
+            <span class="desc">checks against everything you've stored before</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards" style="margin-top:32px">
+        <div class="card">
+          <h4>Search &amp; revisit</h4>
+          <p>"Show me my highest-rated ideas"<br>"Find ideas related to automation"<br>"What have I not looked at in a while?"</p>
+        </div>
+        <div class="card">
+          <h4>Evolve winners</h4>
+          <p>"Reimagine that CLI tool as a SaaS product"<br>"Create an MVP plan for my top idea"</p>
+        </div>
+        <div class="card">
+          <h4>Never repeat</h4>
+          <p>Every idea is checked for duplicates against your entire database. Your assistant remembers across sessions.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section id="install">
+      <h2>Install</h2>
+      <p>Clone, build, and connect in under 2 minutes.</p>
+
+      <div class="install-block">
+        <div class="install-header">
+          <div class="circles"><span></span><span></span><span></span></div>
+          Terminal
+        </div>
+        <pre><span class="cmd">git clone</span> https://github.com/mordiaky/idea-lab-mcp.git
+<span class="cmd">cd</span> idea-lab-mcp
+<span class="cmd">npm install</span>
+<span class="cmd">npm run</span> build
+<span class="cmd">npm run</span> db:migrate    <span class="comment"># creates ~/.idea-lab/ideas.db</span></pre>
+      </div>
+
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-top:16px">
+        Requires <strong>Node.js 22+</strong>. If <code>npm install</code> fails, see
+        <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/docs/platform-setup.md">platform setup</a>
+        for macOS / Windows / Linux build tool instructions.
+      </p>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>Connect to your editor</h2>
+      <p>Works with any MCP client. Pick yours and add the config below.</p>
+
+      <div class="client-grid" style="margin-bottom:24px">
+        <div class="client-item">VS Code</div>
+        <div class="client-item">Cursor</div>
+        <div class="client-item">Windsurf</div>
+        <div class="client-item">Continue</div>
+        <div class="client-item">Cline</div>
+        <div class="client-item">Claude Desktop</div>
+        <div class="client-item">Claude Code</div>
+        <div class="client-item">Zed</div>
+      </div>
+
+      <div class="config-tabs">
+        <div class="tab-buttons">
+          <button class="tab-btn active" onclick="showTab('vscode')">VS Code</button>
+          <button class="tab-btn" onclick="showTab('cursor')">Cursor</button>
+          <button class="tab-btn" onclick="showTab('windsurf')">Windsurf</button>
+          <button class="tab-btn" onclick="showTab('continue')">Continue</button>
+          <button class="tab-btn" onclick="showTab('cline')">Cline</button>
+          <button class="tab-btn" onclick="showTab('claude-desktop')">Claude Desktop</button>
+          <button class="tab-btn" onclick="showTab('claude-code')">Claude Code</button>
+          <button class="tab-btn" onclick="showTab('zed')">Zed</button>
+        </div>
+
+        <div id="vscode" class="tab-content active">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>.vscode/mcp.json</div>
+<pre>{
+  <span class="cmd">"servers"</span>: {
+    <span class="cmd">"idea-lab"</span>: {
+      <span class="flag">"type"</span>: "stdio",
+      <span class="flag">"command"</span>: "node",
+      <span class="flag">"args"</span>: ["/absolute/path/to/idea-lab-mcp/build/index.js"]
+    }
+  }
+}</pre></div>
+          <p class="tab-note">Requires GitHub Copilot with agent mode enabled.</p>
+        </div>
+
+        <div id="cursor" class="tab-content">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>~/.cursor/mcp.json</div>
+<pre>{
+  <span class="cmd">"mcpServers"</span>: {
+    <span class="cmd">"idea-lab"</span>: {
+      <span class="flag">"command"</span>: "node",
+      <span class="flag">"args"</span>: ["/absolute/path/to/idea-lab-mcp/build/index.js"]
+    }
+  }
+}</pre></div>
+          <p class="tab-note">Global config. For per-project, use <code>.cursor/mcp.json</code> in your project root.</p>
+        </div>
+
+        <div id="windsurf" class="tab-content">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>~/.codeium/windsurf/mcp_config.json</div>
+<pre>{
+  <span class="cmd">"mcpServers"</span>: {
+    <span class="cmd">"idea-lab"</span>: {
+      <span class="flag">"command"</span>: "node",
+      <span class="flag">"args"</span>: ["/absolute/path/to/idea-lab-mcp/build/index.js"]
+    }
+  }
+}</pre></div>
+        </div>
+
+        <div id="continue" class="tab-content">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>~/.continue/config.yaml</div>
+<pre><span class="cmd">mcpServers</span>:
+  - <span class="flag">name</span>: idea-lab
+    <span class="flag">command</span>: node
+    <span class="flag">args</span>:
+      - /absolute/path/to/idea-lab-mcp/build/index.js</pre></div>
+        </div>
+
+        <div id="cline" class="tab-content">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>cline_mcp_settings.json</div>
+<pre>{
+  <span class="cmd">"mcpServers"</span>: {
+    <span class="cmd">"idea-lab"</span>: {
+      <span class="flag">"command"</span>: "node",
+      <span class="flag">"args"</span>: ["/absolute/path/to/idea-lab-mcp/build/index.js"]
+    }
+  }
+}</pre></div>
+          <p class="tab-note">Or use the MCP Servers panel in Cline's UI to add it visually.</p>
+        </div>
+
+        <div id="claude-desktop" class="tab-content">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>claude_desktop_config.json</div>
+<pre>{
+  <span class="cmd">"mcpServers"</span>: {
+    <span class="cmd">"idea-lab"</span>: {
+      <span class="flag">"command"</span>: "node",
+      <span class="flag">"args"</span>: ["/absolute/path/to/idea-lab-mcp/build/index.js"]
+    }
+  }
+}</pre></div>
+          <p class="tab-note">Fully quit and restart the app after editing.</p>
+        </div>
+
+        <div id="claude-code" class="tab-content">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>Terminal</div>
+<pre><span class="cmd">claude mcp add</span> idea-lab <span class="flag">--</span> node /absolute/path/to/idea-lab-mcp/build/index.js</pre></div>
+        </div>
+
+        <div id="zed" class="tab-content">
+          <div class="install-block"><div class="install-header"><div class="circles"><span></span><span></span><span></span></div>~/.config/zed/settings.json</div>
+<pre>{
+  <span class="cmd">"context_servers"</span>: {
+    <span class="cmd">"idea-lab"</span>: {
+      <span class="flag">"source"</span>: "custom",
+      <span class="flag">"command"</span>: "node",
+      <span class="flag">"args"</span>: ["/absolute/path/to/idea-lab-mcp/build/index.js"]
+    }
+  }
+}</pre></div>
+          <p class="tab-note"><code>"source": "custom"</code> is required for Zed.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>Scoring</h2>
+      <p>Each idea is scored 0-10 on 7 dimensions with different weights.</p>
+
+      <table>
+        <tr><th>Dimension</th><th>Weight</th><th>What it measures</th></tr>
+        <tr><td>Novelty</td><td>25%</td><td>Is this genuinely new?</td></tr>
+        <tr><td>Usefulness</td><td>25%</td><td>Does it solve a real problem?</td></tr>
+        <tr><td>Feasibility</td><td>20%</td><td>Can it actually be built?</td></tr>
+        <tr><td>Testability</td><td>15%</td><td>Can you validate it works?</td></tr>
+        <tr><td>Speed to MVP</td><td>10%</td><td>How fast to a working prototype?</td></tr>
+        <tr><td>Defensibility</td><td>5%</td><td>Is it hard to copy?</td></tr>
+        <tr><td style="color:var(--orange)">Clarity</td><td>gate</td><td>Is the idea well-defined? (min 5 to pass, not in composite)</td></tr>
+      </table>
+
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-top:16px">
+        Ideas need to clear minimums to advance: feasibility &ge; 7, usefulness &ge; 7, novelty &ge; 6, composite &ge; 6.5.
+      </p>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>Idea lifecycle</h2>
+      <p>Ideas move through stages as they're evaluated. Rejected is terminal from any state.</p>
+      <div class="lifecycle">
+        <div class="lifecycle-stage stage-raw">raw</div>
+        <span class="lifecycle-arrow">&rarr;</span>
+        <div class="lifecycle-stage stage-shortlisted">shortlisted</div>
+        <span class="lifecycle-arrow">&rarr;</span>
+        <div class="lifecycle-stage stage-build">build-next</div>
+      </div>
+      <div style="text-align:center;margin-top:8px">
+        <div class="lifecycle-stage stage-rejected" style="display:inline-block">rejected</div>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px">terminal — reachable from any stage</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="container">
+    <section>
+      <h2>All 14 tools</h2>
+      <p>Everything your assistant needs to run the full ideation pipeline.</p>
+
+      <h3>Generation</h3>
+      <div class="tools-grid">
+        <div class="tool-item"><div><div class="tool-name">generate_ideas</div><div class="tool-desc">Create 5-8 candidates using 4 creative techniques</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">save_idea</div><div class="tool-desc">Store a new idea in the database</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">mutate_idea</div><div class="tool-desc">Create a variant on a different axis</div></div></div>
+      </div>
+
+      <h3>Evaluation</h3>
+      <div class="tools-grid">
+        <div class="tool-item"><div><div class="tool-name">score_idea</div><div class="tool-desc">Score on 7 weighted dimensions</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">critique_idea</div><div class="tool-desc">Adversarial critique — find every flaw</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">check_duplicate</div><div class="tool-desc">Detect duplicates against stored ideas</div></div></div>
+      </div>
+
+      <h3>Retrieval</h3>
+      <div class="tools-grid">
+        <div class="tool-item"><div><div class="tool-name">search_ideas</div><div class="tool-desc">Filter by status, domain, score, tags, date</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">get_recent_ideas</div><div class="tool-desc">Get the last N ideas</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">resurface_ideas</div><div class="tool-desc">Find stale shortlisted ideas for re-review</div></div></div>
+      </div>
+
+      <h3>Lifecycle</h3>
+      <div class="tools-grid">
+        <div class="tool-item"><div><div class="tool-name">promote_idea</div><div class="tool-desc">Advance through lifecycle stages</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">delete_idea</div><div class="tool-desc">Permanently remove a rejected idea</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">mark_revalidated</div><div class="tool-desc">Mark as re-reviewed after resurfacing</div></div></div>
+        <div class="tool-item"><div><div class="tool-name">remove_pattern</div><div class="tool-desc">Delete a false-positive rejection pattern</div></div></div>
+      </div>
+
+      <h3>Planning</h3>
+      <div class="tools-grid">
+        <div class="tool-item"><div><div class="tool-name">generate_action_plan</div><div class="tool-desc">Create 3-5 MVP steps with tech stack</div></div></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="container">
+      <p>
+        <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/LICENSE">PolyForm Noncommercial 1.0.0</a> — free for personal and non-commercial use.
+      </p>
+      <p style="margin-top:8px">
+        <a href="https://github.com/mordiaky/idea-lab-mcp">GitHub</a> &middot;
+        <a href="https://github.com/mordiaky/idea-lab-mcp/issues">Issues</a> &middot;
+        <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/SECURITY.md">Security</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    function showTab(id) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
