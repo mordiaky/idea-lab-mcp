@@ -14,7 +14,10 @@ router.get("/", (_req, res) => {
         SUM(CASE WHEN i.status = 'raw' THEN 1 ELSE 0 END) AS raw,
         SUM(CASE WHEN i.status = 'shortlisted' THEN 1 ELSE 0 END) AS shortlisted,
         SUM(CASE WHEN i.status = 'build-next' THEN 1 ELSE 0 END) AS buildNext,
-        SUM(CASE WHEN i.status = 'rejected' THEN 1 ELSE 0 END) AS rejected
+        SUM(CASE WHEN i.status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+        SUM(CASE WHEN i.status = 'in-progress' THEN 1 ELSE 0 END) AS inProgress,
+        SUM(CASE WHEN i.status = 'completed' THEN 1 ELSE 0 END) AS completed,
+        SUM(CASE WHEN i.status = 'needs-revision' THEN 1 ELSE 0 END) AS needsRevision
       FROM ideas i
       LEFT JOIN (
         SELECT idea_id, composite, ROW_NUMBER() OVER (PARTITION BY idea_id ORDER BY created_at DESC) AS rn
@@ -32,6 +35,9 @@ router.get("/", (_req, res) => {
     shortlisted: number;
     buildNext: number;
     rejected: number;
+    inProgress: number;
+    completed: number;
+    needsRevision: number;
   }>;
 
   const result = rows.map((r) => ({
@@ -43,6 +49,9 @@ router.get("/", (_req, res) => {
       shortlisted: r.shortlisted,
       buildNext: r.buildNext,
       rejected: r.rejected,
+      inProgress: r.inProgress,
+      completed: r.completed,
+      needsRevision: r.needsRevision,
     },
   }));
 

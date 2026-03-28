@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -11,11 +11,15 @@ import type { IdeaSummary } from "../types.js";
 import { getIdeas, updateIdeaStatus } from "../api.js";
 import { KanbanColumn } from "./KanbanColumn.js";
 import { IdeaCard } from "./IdeaCard.js";
+import { Toast } from "./Toast.js";
 
 const COLUMNS: { status: IdeaSummary["status"]; title: string }[] = [
   { status: "raw", title: "Raw" },
   { status: "shortlisted", title: "Shortlisted" },
   { status: "build-next", title: "Build Next" },
+  { status: "in-progress", title: "In Progress" },
+  { status: "completed", title: "Completed" },
+  { status: "needs-revision", title: "Needs Revision" },
   { status: "rejected", title: "Rejected" },
 ];
 
@@ -28,6 +32,7 @@ export function KanbanBoard({ onSelectIdea }: KanbanBoardProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeIdea, setActiveIdea] = useState<IdeaSummary | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -35,7 +40,7 @@ export function KanbanBoard({ onSelectIdea }: KanbanBoardProps) {
     })
   );
 
-  useEffect(() => {
+  const reload = useCallback(() => {
     getIdeas()
       .then(setIdeas)
       .catch((e: unknown) =>
@@ -43,6 +48,10 @@ export function KanbanBoard({ onSelectIdea }: KanbanBoardProps) {
       )
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   function handleDragStart(event: DragStartEvent) {
     const idea = ideas.find((i) => i.id === event.active.id);
@@ -67,8 +76,16 @@ export function KanbanBoard({ onSelectIdea }: KanbanBoardProps) {
 
     try {
       await updateIdeaStatus(draggedId, targetStatus);
+      setToast({
+        message: `"${dragged.title}" moved to ${targetStatus}`,
+        type: "success",
+      });
     } catch {
       setIdeas(previous);
+      setToast({
+        message: `Failed to move "${dragged.title}"`,
+        type: "error",
+      });
     }
   }
 
@@ -78,7 +95,7 @@ export function KanbanBoard({ onSelectIdea }: KanbanBoardProps) {
 
   if (error) {
     return (
-      <div className="loading-spinner" style={{ color: "#ef4444" }}>
+      <div className="loading-spinner" style={{ color: "var(--color-error)" }}>
         {error}
       </div>
     );
@@ -109,6 +126,14 @@ export function KanbanBoard({ onSelectIdea }: KanbanBoardProps) {
           />
         )}
       </DragOverlay>
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </DndContext>
   );
 }

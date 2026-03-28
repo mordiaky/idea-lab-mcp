@@ -20,6 +20,15 @@ function verdictClass(verdict: IdeaSummary["overallVerdict"]): string {
   return "badge-verdict-reject";
 }
 
+function statusIcon(status: IdeaSummary["status"]): string {
+  switch (status) {
+    case "in-progress": return "\u25b6 ";
+    case "completed": return "\u2713 ";
+    case "needs-revision": return "\u21bb ";
+    default: return "";
+  }
+}
+
 export function IdeaCard({ idea, onClick }: IdeaCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: idea.id,
@@ -38,7 +47,7 @@ export function IdeaCard({ idea, onClick }: IdeaCardProps) {
       }}
     >
       <div className="idea-card-title" title={idea.title}>
-        {idea.title}
+        {statusIcon(idea.status)}{idea.title}
       </div>
       <div className="idea-card-meta">
         {idea.domain && (

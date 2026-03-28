@@ -1,6 +1,6 @@
 {
   "name": "idea-lab-mcp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP server for structured ideation — generating, scoring, deduplicating, and storing software ideas",
   "type": "module",
   "main": "build/server.js",
@@ -10,6 +10,7 @@
   "files": [
     "build",
     "config",
+    "web/dist",
     "src/db/migrations",
     "LICENSE",
     "README.md"
@@ -22,19 +23,13 @@
   "bugs": {
     "url": "https://github.com/mordiaky/idea-lab-mcp/issues"
   },
-  "keywords": [
-    "mcp",
-    "mcp-server",
-    "model-context-protocol",
-    "ideation",
-    "idea-generation",
-    "software-ideas",
-    "sqlite"
-  ],
-  "author": "mordiaky",
+  "keywords": [],
+  "author": "",
   "scripts": {
     "dev": "tsx src/server.ts",
-    "build": "tsc",
+    "build": "tsc && npm run build:web",
+    "build:web": "cd web && npm run build",
+    "build:server": "tsc",
     "test": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
@@ -42,18 +37,18 @@
     "lint": "eslint src/",
     "format": "prettier --write src/"
   },
-  "keywords": [],
-  "author": "",
   "license": "PolyForm-Noncommercial-1.0.0",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "better-sqlite3": "^11.9.1",
     "drizzle-orm": "^0.45.1",
+    "express": "^4.22.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^5.0.6",
     "@types/node": "^25.5.0",
     "dotenv": "^17.3.1",
     "drizzle-kit": "^0.31.10",

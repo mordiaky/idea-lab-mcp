@@ -21,12 +21,22 @@ interface GraphData {
   links: GraphLink[];
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  raw: "#6b7280",
-  shortlisted: "#3b82f6",
-  "build-next": "#10b981",
-  rejected: "#ef4444",
-};
+function getCssVar(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function getStatusColor(status: string): string {
+  const varMap: Record<string, string> = {
+    raw: "--color-raw",
+    shortlisted: "--color-shortlisted",
+    "build-next": "--color-build-next",
+    rejected: "--color-rejected",
+    "in-progress": "--color-in-progress",
+    completed: "--color-completed",
+    "needs-revision": "--color-needs-revision",
+  };
+  return getCssVar(varMap[status] ?? "--color-raw") || "#6b7280";
+}
 
 interface GraphViewProps {
   onSelectIdea: (id: string) => void;
@@ -83,7 +93,7 @@ export function GraphView({ onSelectIdea }: GraphViewProps) {
 
   if (error) {
     return (
-      <div className="loading-spinner" style={{ color: "#ef4444" }}>
+      <div className="loading-spinner" style={{ color: "var(--color-error)" }}>
         {error}
       </div>
     );
@@ -108,7 +118,7 @@ export function GraphView({ onSelectIdea }: GraphViewProps) {
         graphData={graphData}
         nodeLabel={(node) => (node as GraphNode).title}
         nodeColor={(node) =>
-          STATUS_COLORS[(node as GraphNode).status] ?? "#6b7280"
+          getStatusColor((node as GraphNode).status)
         }
         nodeVal={(node) => {
           const composite = (node as GraphNode).composite;
@@ -121,17 +131,17 @@ export function GraphView({ onSelectIdea }: GraphViewProps) {
             n.title.length > 25 ? n.title.slice(0, 25) + "…" : n.title;
           const fontSize = 12 / globalScale;
           ctx.font = `${fontSize}px sans-serif`;
-          ctx.fillStyle = "#374151";
+          ctx.fillStyle = getCssVar("--color-graph-label") || "#374151";
           ctx.textAlign = "center";
           ctx.fillText(label, n.x ?? 0, (n.y ?? 0) + 10 / globalScale + 4);
         }}
-        linkColor={() => "#94a3b8"}
+        linkColor={() => getCssVar("--color-graph-link") || "#94a3b8"}
         linkDirectionalArrowLength={6}
         linkDirectionalArrowRelPos={1}
         onNodeClick={(node) => {
           onSelectIdea((node as GraphNode).id);
         }}
-        backgroundColor="#f3f4f6"
+        backgroundColor={getCssVar("--color-bg") || "#f3f4f6"}
       />
     </div>
   );

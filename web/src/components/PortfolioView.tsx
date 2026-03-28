@@ -3,7 +3,7 @@ import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import type { PortfolioDomain } from "../types.js";
 import { getPortfolio } from "../api.js";
 
-type SortKey = "domain" | "count" | "avgComposite" | "raw" | "shortlisted" | "buildNext" | "rejected";
+type SortKey = "domain" | "count" | "avgComposite" | "raw" | "shortlisted" | "buildNext" | "rejected" | "inProgress" | "completed" | "needsRevision";
 
 function scoreColor(avg: number): string {
   if (avg > 8) return "#059669";
@@ -104,6 +104,18 @@ export function PortfolioView() {
           aVal = a.statusBreakdown.rejected;
           bVal = b.statusBreakdown.rejected;
           break;
+        case "inProgress":
+          aVal = a.statusBreakdown.inProgress;
+          bVal = b.statusBreakdown.inProgress;
+          break;
+        case "completed":
+          aVal = a.statusBreakdown.completed;
+          bVal = b.statusBreakdown.completed;
+          break;
+        case "needsRevision":
+          aVal = a.statusBreakdown.needsRevision;
+          bVal = b.statusBreakdown.needsRevision;
+          break;
         default:
           return 0;
       }
@@ -127,7 +139,7 @@ export function PortfolioView() {
 
   if (error) {
     return (
-      <div className="loading-spinner" style={{ color: "#ef4444" }}>
+      <div className="loading-spinner" style={{ color: "var(--color-error)" }}>
         {error}
       </div>
     );
@@ -180,6 +192,9 @@ export function PortfolioView() {
                   { key: "raw", label: "Raw" },
                   { key: "shortlisted", label: "Shortlisted" },
                   { key: "buildNext", label: "Build Next" },
+                  { key: "inProgress", label: "In Progress" },
+                  { key: "completed", label: "Completed" },
+                  { key: "needsRevision", label: "Revision" },
                   { key: "rejected", label: "Rejected" },
                 ] as { key: SortKey; label: string }[]
               ).map(({ key, label }) => (
@@ -203,6 +218,9 @@ export function PortfolioView() {
                 <td>{d.statusBreakdown.raw}</td>
                 <td>{d.statusBreakdown.shortlisted}</td>
                 <td>{d.statusBreakdown.buildNext}</td>
+                <td>{d.statusBreakdown.inProgress}</td>
+                <td>{d.statusBreakdown.completed}</td>
+                <td>{d.statusBreakdown.needsRevision}</td>
                 <td>{d.statusBreakdown.rejected}</td>
               </tr>
             ))}

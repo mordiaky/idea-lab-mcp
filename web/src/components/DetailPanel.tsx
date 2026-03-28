@@ -1,18 +1,51 @@
 import { useEffect, useState } from "react";
-import type { IdeaDetail } from "../types.js";
-import { getIdea } from "../api.js";
+import type { IdeaDetail, IdeaSummary } from "../types.js";
+import { getIdea, updateIdeaStatus } from "../api.js";
 import { RadarChart } from "./RadarChart.js";
+import { Toast } from "./Toast.js";
 
 interface DetailPanelProps {
   ideaId: string;
   onClose: () => void;
   onSelectIdea: (id: string) => void;
+  onStatusChanged?: () => void;
 }
 
-export function DetailPanel({ ideaId, onClose, onSelectIdea }: DetailPanelProps) {
+const STATUS_ACTIONS: Record<string, { label: string; target: IdeaSummary["status"]; color: string }[]> = {
+  raw: [
+    { label: "Shortlist", target: "shortlisted", color: "#3b82f6" },
+    { label: "Reject", target: "rejected", color: "#ef4444" },
+  ],
+  shortlisted: [
+    { label: "Build Next", target: "build-next", color: "#10b981" },
+    { label: "Reject", target: "rejected", color: "#ef4444" },
+  ],
+  "build-next": [
+    { label: "Start Building", target: "in-progress", color: "#f59e0b" },
+    { label: "Reject", target: "rejected", color: "#ef4444" },
+  ],
+  "in-progress": [
+    { label: "Mark Completed", target: "completed", color: "#10b981" },
+    { label: "Back to Build Next", target: "build-next", color: "#6b7280" },
+  ],
+  completed: [
+    { label: "Needs Revision", target: "needs-revision", color: "#f59e0b" },
+  ],
+  "needs-revision": [
+    { label: "Start Revising", target: "in-progress", color: "#f59e0b" },
+    { label: "Mark Completed", target: "completed", color: "#10b981" },
+  ],
+  rejected: [
+    { label: "Reconsider (Raw)", target: "raw", color: "#6b7280" },
+  ],
+};
+
+export function DetailPanel({ ideaId, onClose, onSelectIdea, onStatusChanged }: DetailPanelProps) {
   const [idea, setIdea] = useState<IdeaDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -24,6 +57,21 @@ export function DetailPanel({ ideaId, onClose, onSelectIdea }: DetailPanelProps)
       )
       .finally(() => setLoading(false));
   }, [ideaId]);
+
+  async function handleStatusChange(newStatus: IdeaSummary["status"]) {
+    if (!idea || updating) return;
+    setUpdating(true);
+    try {
+      await updateIdeaStatus(idea.id, newStatus);
+      setIdea({ ...idea, status: newStatus });
+      setToast({ message: `Status changed to ${newStatus}`, type: "success" });
+      onStatusChanged?.();
+    } catch {
+      setToast({ message: "Failed to update status", type: "error" });
+    } finally {
+      setUpdating(false);
+    }
+  }
 
   const critique = idea?.critique;
   const flags = critique
@@ -41,9 +89,12 @@ export function DetailPanel({ ideaId, onClose, onSelectIdea }: DetailPanelProps)
     try {
       mvpSteps = JSON.parse(idea.mvpSteps) as string[];
     } catch {
-      // not parseable JSON — ignore
+      // not parseable JSON — treat as plain text
+      mvpSteps = [idea.mvpSteps];
     }
   }
+
+  const actions = idea ? (STATUS_ACTIONS[idea.status] ?? []) : [];
 
   return (
     <>
@@ -51,7 +102,7 @@ export function DetailPanel({ ideaId, onClose, onSelectIdea }: DetailPanelProps)
       <div className="detail-panel">
         {loading && <div className="loading-spinner">Loading...</div>}
         {error && (
-          <div className="loading-spinner" style={{ color: "#ef4444" }}>
+          <div className="loading-spinner" style={{ color: "var(--color-error)" }}>
             {error}
           </div>
         )}
@@ -64,14 +115,40 @@ export function DetailPanel({ ideaId, onClose, onSelectIdea }: DetailPanelProps)
               </button>
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
               <span className={`status-badge status-${idea.status}`}>
                 {idea.status}
               </span>
               {idea.domain && (
                 <span className="badge badge-domain">{idea.domain}</span>
               )}
+              {idea.score && (
+                <span className="badge badge-score-high">
+                  {idea.score.composite.toFixed(1)}
+                </span>
+              )}
             </div>
+
+            {/* Action Buttons */}
+            {actions.length > 0 && (
+              <div className="detail-actions">
+                {actions.map((action) => (
+                  <button
+                    key={action.target}
+                    className="action-btn"
+                    style={{
+                      background: action.color,
+                      color: "#fff",
+                      opacity: updating ? 0.6 : 1,
+                    }}
+                    disabled={updating}
+                    onClick={() => handleStatusChange(action.target)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="detail-one-liner">{idea.oneLiner}</div>
 
@@ -185,7 +262,7 @@ export function DetailPanel({ ideaId, onClose, onSelectIdea }: DetailPanelProps)
                     >
                       {isParent ? "Child:" : "Parent:"} {linkedTitle}
                       {v.mutationAxis && (
-                        <span style={{ color: "#6b7280" }}>
+                        <span style={{ color: "var(--color-text-muted)" }}>
                           {" "}
                           ({v.mutationAxis})
                         </span>
@@ -195,7 +272,25 @@ export function DetailPanel({ ideaId, onClose, onSelectIdea }: DetailPanelProps)
                 })}
               </div>
             )}
+
+            <div className="detail-section detail-timestamps">
+              <div className="detail-section-title">Timeline</div>
+              <div className="detail-section-body">
+                Created: {new Date(idea.createdAt).toLocaleDateString()}
+              </div>
+              <div className="detail-section-body">
+                Updated: {new Date(idea.updatedAt).toLocaleDateString()}
+              </div>
+            </div>
           </>
+        )}
+
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
         )}
       </div>
     </>

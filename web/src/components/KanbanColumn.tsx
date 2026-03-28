@@ -26,7 +26,7 @@ export function KanbanColumn({
       <div
         ref={setNodeRef}
         className="kanban-column-body"
-        style={{ background: isOver ? "#e0f2fe" : undefined }}
+        style={{ background: isOver ? "var(--color-link-bg)" : undefined }}
       >
         {ideas.map((idea) => (
           <IdeaCard

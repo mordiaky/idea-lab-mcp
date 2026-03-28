@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { exec } from "child_process";
 import { saveScore } from "../services/scoring.js";
 import { saveCritique } from "../services/critique.js";
 import { getStoredIdeaSummaries, recordDuplicateCheck } from "../services/deduplication.js";
@@ -941,6 +942,57 @@ export function registerTools(server: McpServer): void {
 
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
+      };
+    },
+  );
+
+  // --- Dashboard Tool ---
+  server.tool(
+    "idea_lab_open_dashboard",
+    "Open the Idea Lab web dashboard in the user's default browser. The dashboard shows a Kanban board of all ideas, a graph view of idea lineage, radar charts for scoring dimensions, and a portfolio heat map. Drag-and-drop to change idea status, click ideas for full details. The dashboard runs automatically as part of the MCP server — no separate setup needed.",
+    {
+      port: z.number().optional().describe("Port the dashboard is running on (default: 3001)"),
+    },
+    async (args) => {
+      const port = args.port ?? parseInt(process.env.IDEA_LAB_WEB_PORT ?? "3001", 10);
+      const url = `http://localhost:${port}`;
+
+      // Open browser cross-platform
+      const platform = process.platform;
+      const cmd =
+        platform === "darwin"
+          ? `open "${url}"`
+          : platform === "win32"
+            ? `start "${url}"`
+            : `xdg-open "${url}"`;
+
+      exec(cmd, (err) => {
+        if (err) {
+          process.stderr.write(`[idea-lab] Failed to open browser: ${err.message}\n`);
+        }
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(
+              {
+                url,
+                message: `Dashboard opened at ${url}`,
+                features: [
+                  "Kanban board with drag-and-drop status changes",
+                  "Click any idea card for full details + radar chart",
+                  "Graph view showing idea mutation lineage",
+                  "Portfolio heat map by domain",
+                  "Action buttons to promote, reject, start building, complete, or flag for revision",
+                ],
+              },
+              null,
+              2,
+            ),
+          },
+        ],
       };
     },
   );

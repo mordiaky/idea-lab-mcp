@@ -61,7 +61,7 @@ export function RadarChart({ score }: RadarChartProps) {
         }}
       >
         {score.composite.toFixed(1)}{" "}
-        <span style={{ fontSize: 16, color: "#6b7280" }}>/ 10</span>
+        <span style={{ fontSize: 16, color: "var(--color-text-muted)" }}>/ 10</span>
       </div>
     </div>
   );

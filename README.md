@@ -6,6 +6,8 @@
 
 An MCP server that turns your AI assistant into a structured ideation partner. It generates, scores, critiques, and stores software ideas locally — so your assistant remembers past ideas across sessions and never suggests the same thing twice.
 
+Includes a **built-in web dashboard** with a Kanban board, lineage graph, and portfolio view — with dark and light mode support.
+
 ## What it does
 
 You talk to your AI assistant like normal. Idea Lab gives it tools to:
@@ -39,6 +41,20 @@ You talk to your AI assistant like normal. Idea Lab gives it tools to:
 
 Everything is stored locally in SQLite. No cloud, no API keys, no data leaving your machine.
 
+## Web Dashboard
+
+The MCP server includes a built-in web dashboard that starts automatically at `http://localhost:3001`. No separate process needed.
+
+- **Kanban Board** — drag-and-drop ideas between status columns
+- **Lineage Graph** — visualize how ideas connect through mutations
+- **Portfolio View** — heat map and table showing domain distribution and scores
+- **Detail Panel** — click any idea for its full breakdown (radar chart, critique flags, MVP steps, lineage)
+- **Dark / Light Mode** — toggle in the navbar, respects OS preference, persists across sessions
+
+Use the `idea_lab_open_dashboard` tool to open it in your browser, or just navigate to `http://localhost:3001` directly.
+
+For the full guide, see [Web Dashboard Guide](docs/web-dashboard.md).
+
 ## Install
 
 ### From npm
@@ -55,11 +71,13 @@ node build/db/migrate.js
 git clone https://github.com/mordiaky/idea-lab-mcp.git
 cd idea-lab-mcp
 npm install
-npm run build
+npm run build        # compiles server + web dashboard
 npm run db:migrate
 ```
 
 Requires **Node.js 22+**. If `npm install` fails, see [platform setup](docs/platform-setup.md).
+
+Once connected to your editor, the MCP server starts automatically and the web dashboard is available at `http://localhost:3001`.
 
 ## Connect to your editor
 
@@ -305,24 +323,32 @@ raw  -->  shortlisted  -->  build-next
 | `idea_lab_submit_idea` | Import unstructured notes and extract ideas |
 | `idea_lab_refine_idea` | Strengthen a weak idea through constraints |
 | `idea_lab_decompose_idea` | Break a big idea into shippable micro-products |
+| `idea_lab_open_dashboard` | Open the web dashboard in your browser |
 
 ## Configuration
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DB_PATH` | `~/.idea-lab/ideas.db` | SQLite database location |
+| `IDEA_LAB_DB` | `~/.idea-lab/ideas.db` | SQLite database location |
+| `IDEA_LAB_WEB_PORT` | `3001` | Port for the web dashboard |
 
-That's the only setting. The default works without any configuration.
+Both settings are optional. The defaults work without any configuration.
 
 ## Development
 
 ```bash
-npm run dev           # Run server (no build step)
-npm run build         # Compile TypeScript
+npm run dev           # Run MCP server (no build step, serves built dashboard)
+npm run build         # Compile TypeScript server + React dashboard
 npm test              # Run tests
 npm run db:generate   # Generate migrations from schema changes
 npm run db:migrate    # Apply migrations
 npm run db:seed       # Load sample data
+```
+
+For dashboard frontend development with hot reload:
+
+```bash
+cd web && npm run dev  # Vite dev server, proxies API to port 3001
 ```
 
 ## License

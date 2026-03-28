@@ -3,7 +3,7 @@ export interface IdeaSummary {
   title: string;
   oneLiner: string;
   domain: string | null;
-  status: "raw" | "shortlisted" | "build-next" | "rejected";
+  status: "raw" | "shortlisted" | "build-next" | "rejected" | "in-progress" | "completed" | "needs-revision";
   composite: number | null;
   overallVerdict: "pass" | "weak" | "reject" | null;
   createdAt: string;
@@ -56,7 +56,7 @@ export interface IdeaDetail {
   risks: string | null;
   mvpSteps: string | null;
   domain: string | null;
-  status: "raw" | "shortlisted" | "build-next" | "rejected";
+  status: "raw" | "shortlisted" | "build-next" | "rejected" | "in-progress" | "completed" | "needs-revision";
   createdAt: string;
   updatedAt: string;
   score: Score | null;
@@ -88,5 +88,8 @@ export interface PortfolioDomain {
     shortlisted: number;
     buildNext: number;
     rejected: number;
+    inProgress: number;
+    completed: number;
+    needsRevision: number;
   };
 }
