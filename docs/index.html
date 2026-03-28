@@ -359,11 +359,11 @@
   <div class="container">
     <div class="hero">
       <h1>Idea <span>Lab</span></h1>
-      <p>An MCP server that turns your AI assistant into a structured ideation partner. Generate, score, critique, and store software ideas — all locally.</p>
+      <p>An MCP server that turns your AI assistant into a structured ideation partner. Generate, score, critique, and store software ideas — with a built-in web dashboard. All local.</p>
       <div class="hero-badges">
-        <span class="badge"><span class="dot dot-green"></span> 17 MCP tools</span>
-        <span class="badge"><span class="dot dot-blue"></span> Local SQLite storage</span>
-        <span class="badge"><span class="dot dot-orange"></span> Zero config</span>
+        <span class="badge"><span class="dot dot-green"></span> 18 MCP tools</span>
+        <span class="badge"><span class="dot dot-blue"></span> Web dashboard</span>
+        <span class="badge"><span class="dot dot-orange"></span> Dark &amp; light mode</span>
         <span class="badge"><span class="dot dot-purple"></span> Any MCP client</span>
       </div>
       <div class="buttons">
@@ -440,6 +440,44 @@
   </div>
 
   <div class="container">
+    <section>
+      <h2>Web Dashboard</h2>
+      <p>A built-in visual interface for browsing and managing your ideas. Starts automatically — no separate process.</p>
+
+      <div class="cards">
+        <div class="card" style="border-top: 3px solid var(--accent)">
+          <h4>Kanban Board</h4>
+          <p>Drag-and-drop ideas between status columns. See title, domain, score, and verdict at a glance on every card.</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--green)">
+          <h4>Lineage Graph</h4>
+          <p>Force-directed visualization showing how ideas connect through mutations. Node size scales with score. Click to inspect.</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--orange)">
+          <h4>Portfolio View</h4>
+          <p>Domain heat map and sortable breakdown table. See where your ideas cluster and which domains score highest.</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--purple)">
+          <h4>Detail Panel</h4>
+          <p>Click any idea for a full breakdown: radar chart scores, critique flags, MVP steps, tags, and lineage links.</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--text-muted)">
+          <h4>Dark &amp; Light Mode</h4>
+          <p>Toggle in the navbar. Respects your OS preference and remembers your choice across sessions.</p>
+        </div>
+        <div class="card" style="border-top: 3px solid var(--accent-dim)">
+          <h4>Zero Setup</h4>
+          <p>The dashboard starts with the MCP server on port 3001. Just open <code>localhost:3001</code> or use the <code>open_dashboard</code> tool.</p>
+        </div>
+      </div>
+
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-top:24px">
+        For the full guide, see the <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/docs/web-dashboard.md">Web Dashboard Guide</a>.
+      </p>
+    </section>
+  </div>
+
+  <div class="container">
     <section id="install">
       <h2>Install</h2>
       <p>Two options — npm package or from source.</p>
@@ -464,7 +502,7 @@
         <pre><span class="cmd">git clone</span> https://github.com/mordiaky/idea-lab-mcp.git
 <span class="cmd">cd</span> idea-lab-mcp
 <span class="cmd">npm install</span>
-<span class="cmd">npm run</span> build
+<span class="cmd">npm run</span> build         <span class="comment"># compiles server + web dashboard</span>
 <span class="cmd">npm run</span> db:migrate    <span class="comment"># creates ~/.idea-lab/ideas.db</span></pre>
       </div>
 
@@ -625,24 +663,29 @@
   <div class="container">
     <section>
       <h2>Idea lifecycle</h2>
-      <p>Ideas move through stages as they're evaluated. Rejected is terminal from any state.</p>
+      <p>Ideas move through stages as they're evaluated. Drag cards on the Kanban board or use MCP tools.</p>
       <div class="lifecycle">
         <div class="lifecycle-stage stage-raw">raw</div>
         <span class="lifecycle-arrow">&rarr;</span>
         <div class="lifecycle-stage stage-shortlisted">shortlisted</div>
         <span class="lifecycle-arrow">&rarr;</span>
         <div class="lifecycle-stage stage-build">build-next</div>
+        <span class="lifecycle-arrow">&rarr;</span>
+        <div class="lifecycle-stage" style="background:#2d2006;border:1px solid #6e4b12;color:var(--orange)">in-progress</div>
+        <span class="lifecycle-arrow">&rarr;</span>
+        <div class="lifecycle-stage" style="background:#0f2f1c;border:1px solid #238636;color:var(--green)">completed</div>
       </div>
-      <div style="text-align:center;margin-top:8px">
+      <div style="text-align:center;margin-top:12px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
         <div class="lifecycle-stage stage-rejected" style="display:inline-block">rejected</div>
-        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px">terminal — reachable from any stage</p>
+        <div class="lifecycle-stage" style="display:inline-block;background:#2d2006;border:1px solid #6e4b12;color:var(--orange)">needs-revision</div>
       </div>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px;text-align:center">Rejected is reachable from any stage. Needs-revision loops back to in-progress.</p>
     </section>
   </div>
 
   <div class="container">
     <section>
-      <h2>All 17 tools</h2>
+      <h2>All 18 tools</h2>
       <p>Everything your assistant needs to run the full ideation pipeline.</p>
 
       <h3>Generation</h3>
@@ -685,6 +728,11 @@
       <div class="tools-grid">
         <div class="tool-item"><div><div class="tool-name">generate_action_plan</div><div class="tool-desc">Create 3-5 MVP steps with tech stack</div></div></div>
       </div>
+
+      <h3>Dashboard</h3>
+      <div class="tools-grid">
+        <div class="tool-item"><div><div class="tool-name">open_dashboard</div><div class="tool-desc">Open the web dashboard in your browser</div></div></div>
+      </div>
     </section>
   </div>
 
@@ -696,7 +744,8 @@
       <p style="margin-top:8px">
         <a href="https://github.com/mordiaky/idea-lab-mcp">GitHub</a> &middot;
         <a href="https://www.npmjs.com/package/idea-lab-mcp">npm</a> &middot;
-        <a href="https://github.com/mordiaky/idea-lab-mcp/releases">Releases</a> &middot;
+        <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/CHANGELOG.md">Changelog</a> &middot;
+        <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/docs/web-dashboard.md">Dashboard Guide</a> &middot;
         <a href="https://github.com/mordiaky/idea-lab-mcp/issues">Issues</a> &middot;
         <a href="https://github.com/mordiaky/idea-lab-mcp/blob/main/SECURITY.md">Security</a>
       </p>
