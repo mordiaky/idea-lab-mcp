@@ -351,6 +351,10 @@ For dashboard frontend development with hot reload:
 cd web && npm run dev  # Vite dev server, proxies API to port 3001
 ```
 
+## Part of Thinking Tools
+
+Idea Lab is also bundled in [Thinking Tools MCP](https://github.com/mordiaky/thinking-tools) — a unified suite with 61 tools across 8 modules (including Hypothesis Tracker, Decision Matrix, Mental Models, and more). Use this standalone version if you only need ideation.
+
 ## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE) — free for personal and non-commercial use.
